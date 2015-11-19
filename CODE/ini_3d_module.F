@@ -91,6 +91,7 @@ CONTAINS
 
 
     test
+    test2
    END SUBROUTINE ini_3d
 
 END MODULE ini_3d_module
