@@ -1,0 +1,155 @@
+#-----------------------------------------------------------------------------
+# Makefile for model-dependent information:  original shallow-water model
+# This file is intended to be read by GNUmakefile (along with Makefile.host)
+# See the comments in GNUmakefile for more information.
+#
+# This makefile must define all model-dependent information, principally:
+#
+#	A. model-dependent CPP flags
+#	B. name of executable code and default target
+#	C. list of all source files
+#	D. list of all nontrivial dependencies (e.g., on modules)
+#	
+# Explanation of each is in the comments below.
+#
+# Author:  Scott R. Fulton
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# PART A:  model-dependent CPP flags
+#-----------------------------------------------------------------------------
+CPP_OPTS        = 
+
+#-----------------------------------------------------------------------------
+# PART B:  name of executable code and default target
+#-----------------------------------------------------------------------------
+# NAME = name of the executable code, BINDIR = directory in which to put it
+#
+# Leave the other lines alone!  They define the default target "all"
+# (the name is traditional) which gets processed when you run "make".
+# This must go here (before any dependency lines, which are also targets).
+# Using a phony target here allows us to put the actual rule for building
+# the executable code $(MAIN) in the main makefile (GNUmakefile).
+#-----------------------------------------------------------------------------
+NAME = vvm
+BINDIR	= ../../DATA/${CASENAME}
+
+MAIN = $(BINDIR)/$(NAME)
+.PHONY: all
+all : $(MAIN)
+
+#-----------------------------------------------------------------------------
+# PART C:  list of all source files
+#-----------------------------------------------------------------------------
+# The bottom line in this section is to have two variables which list all
+# source files:
+#	SRC_FREE	all .F files using free  source form
+#	SRC_FIXED	all .F files using fixed source form
+# These can be explicit lists (i.e., hard-coded path to each file), but a 
+# far better approach is to define the two lists of files (without paths)
+# and then specify the directories in which to search for them in VPATH. 
+# Either list may be empty.
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# Set the paths to the various source directories
+#-----------------------------------------------------------------------------
+VVM		= ../..
+CODE		= $(VVM)/${CODEDIR}
+CDECKS		= $(VVM)/${CODEDIR}/cdecks
+RRTMG		= $(VVM)/${CODEDIR}/RRTMG
+RAD_RRTM	= $(VVM)/${CODEDIR}/RRTMG/RAD_RRTM_CFMIP
+
+#==hchun===========================
+LSM             = $(VVM)/CODE/LSM
+#==================================
+
+#-----------------------------------------------------------------------------
+# Set the path to search for source files.  This eliminates the need to 
+# hard-code the path to each source file, and allows us to keep multiple 
+# copies in different directories for testing and running variants.  
+# To use the copy you want, just put the directories in the proper order.
+#-----------------------------------------------------------------------------
+VPATH = $(CODE):$(CDECKS):$(RRTMG):$(RAD_RRTM):$(LSM):$(BINDIR)
+
+#-----------------------------------------------------------------------------
+# List the source files (must define SRC_FREE and SRC_FIXED)
+# The splitting here of source files into levels and SW-specific code
+# is NOT needed, but it may help keep track of which files are where.
+#-----------------------------------------------------------------------------
+
+#===hchun=================================
+SRC_FREE_LSM =
+#==========================================
+
+SRC_FREE_RAD_RRTM =
+
+SRC_FREE_RRTMG = \
+	kinds.F 
+
+SRC_FREE_CDECKS = \
+	PARMSLD.f90
+
+SRC_FREE_CODE = \
+	ab_3d_module.F \
+	ldinput.F \
+	ini_3d_module.F \
+        ldmain.F 
+
+####hchun###
+SRC_FREE = $(SRC_FREE_RAD_RRTM) $(SRC_FREE_RRTMG) $(SRC_FREE_CDECKS)  $(SRC_FREE_CODE) $(SRC_FREE_LSM)
+############
+
+
+SRC_FIXED_CODE = 
+
+SRC_FIXED = $(SRC_FIXED_CODE)
+
+#-----------------------------------------------------------------------------
+# PART D:  list of all nontrivial dependencies
+#-----------------------------------------------------------------------------
+# This list is critical--it tells make what depends on what.  The things to 
+# the left of the colon (targets) depend on the things to the right of the 
+# colon (prerequisites).  You can put multiple targets on the left if they 
+# all depend on the same list of prerequisites.
+#
+# Make already knows that an object (.o) file depends on the corresponding 
+# source (.F) file.  What is needed here is any other dependency, such as 
+# dependencies on modules (or include files).  For this, note that it is not
+# the source file (.F) which depends on the module (the source doesn't change
+# if you change the module), but the object code.  Also, what it depends on 
+# is the compiled module (which in turn depends on its own source code).
+# Thus we have .o files on the left (targets) and right (prerequisites).
+#
+# It might be the case (technically) that the object code for a program unit
+# depends not on the object code for a module but rather on some other file
+# (e.g., a .mod file) which is produced as a byproduct of compiling the
+# module.  If this is the case, then this makefile may fail in the unlikely
+# situation that the .mod file is missing or changed but the .o file is not.
+# This could be overcome by introducing the suffix .mod and corresponding 
+# rules, but I'm reluctant to try it:
+# 1. It's highly unlikely to ever be needed,
+# 2. Some systems may use something other than .mod, and
+# 3. I can't find ANY documentation for what the true dependency is.
+#
+# The utility getdep may be used to generate these dependency lists.
+#-----------------------------------------------------------------------------
+
+# Note:  dependencies below were generated automatically by getdep
+# Note:  dependencies on .h files commented out (I don't know where they are)
+# Note:  dependency of timer.o on xlfutility.o (ibm only) commented out
+
+#------RAD_RRTM_CFMIP------:
+
+kinds.o: kinds.F
+
+PARMSLD.o: kinds.o
+
+ab_3d_module.o: kinds.o PARMSLD.o
+
+ldinput.o: kinds.o PARMSLD.o ini_3d_module.o 
+
+ini_3d_module.o: kinds.o PARMSLD.o
+
+ldmain.o: kinds.o ldinput.o ab_3d_module.o PARMSLD.o
+
