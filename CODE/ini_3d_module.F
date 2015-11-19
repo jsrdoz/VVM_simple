@@ -89,6 +89,8 @@ CONTAINS
 !*****************************************************
       SST=20000000
 
+
+    test
    END SUBROUTINE ini_3d
 
 END MODULE ini_3d_module
